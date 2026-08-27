@@ -19,7 +19,7 @@ status, so an already-approved/rejected payout could be re-approved.
 - Reject the approval unless the payout is currently `PENDING`.
 
 **Why it maps to A06:** Insecure Design covers missing business/security controls
-in the design itself — here, the lack of a maker-checker (separation of duties)
+in the design itself but the lack of a maker-checker (separation of duties)
 control was a design flaw, not just a coding bug.
 
 ---
@@ -29,8 +29,7 @@ control was a design flaw, not just a coding bug.
 **File:** `MerchantController.java`
 
 **Issue:** `GET /api/payouts/{payoutId}` returned any payout by ID with no check
-that the caller was associated with that payout's merchant — a classic Insecure
-Direct Object Reference (IDOR).
+that the caller was associated with that payout's merchant.
 
 **Fix:**
 - Changed the route to `GET /api/merchants/{merchantId}/payouts/{payoutId}`.
@@ -48,11 +47,11 @@ with zero ownership check is the textbook IDOR case under this category.
 **File:** `BatchPayoutJob.java`
 
 **Issue:** `runNightlyBatch()` marked every payout as `"PAID"` regardless of whether
-the bank transfer actually succeeded — even a caught `BankTransferException`
-resulted in `"PAID"`, silently corrupting financial state.
+the bank transfer actually succeeded and even a caught `BankTransferException`
+resulted in `"PAID"`.
 
 **Fix:**
-- On success, the payout is marked `"APPROVED"` (not `"PAID"` — the actual
+- On success, the payout is marked `"APPROVED"` (not `"PAID"` because the actual
   settlement should be confirmed separately).
 - On a failed transfer (`BankTransferException`), the payout is marked
   `"REJECTED"` instead of `"PAID"`, and the failure is logged accurately.
@@ -69,7 +68,7 @@ when no money moved.
 
 **Issue:** `POST /api/webhooks/payment-status` trusted the incoming
 `PaymentStatusEvent` completely and immediately marked the referenced payout as
-settled — with no check that the event actually belonged to the merchant that
+settled and with no check that the event actually belonged to the merchant that
 owns that payout. Any caller could forge an event for someone else's payout.
 
 **Fix:**
@@ -80,7 +79,7 @@ owns that payout. Any caller could forge an event for someone else's payout.
   rejected.
 
 **Why it maps to A08:** A08 covers failures to verify the integrity/origin of
-data before trusting and acting on it — settling a payout based on an
+data before trusting and acting on it and settling a payout based on an
 unverified webhook payload is exactly that failure.
 
 ---
