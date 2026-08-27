@@ -14,6 +14,7 @@ public class BatchPayoutJob {
         this.payoutRepository = payoutRepository;
     }
 
+    // OWASP A04: was marking payouts APPROVED even when the bank transfer failed
     public void runNightlyBatch(List<PayoutRequest> approvedPayouts) {
         for (PayoutRequest payout : approvedPayouts) {
             try {
